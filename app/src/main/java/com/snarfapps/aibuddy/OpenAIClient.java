@@ -80,6 +80,8 @@ public class OpenAIClient extends AsyncTask<String, Void, JSONObject> {
             listener.onTaskCompleted(firstChoice.getString("text"));
         } catch (JSONException e) {
             listener.onTaskError(e.getMessage());
+        }catch (Exception e){
+            listener.onTaskError(e.getMessage());
         }
     }
 
