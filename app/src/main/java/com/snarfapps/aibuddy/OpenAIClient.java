@@ -2,7 +2,9 @@ package com.snarfapps.aibuddy;
 
 import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.Toast;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -16,8 +18,8 @@ import okhttp3.Response;
 
 public class OpenAIClient extends AsyncTask<String, Void, JSONObject> {
     private static final String TAG = "OpenAIClient";
-    private static final String API_KEY = "APIKEY";
-    private static final String ENDPOINT = "https://api.openai.com/v1/engines/davinci-codex/completions";
+    private static final String API_KEY = Constants.API_KEY;
+    private static final String ENDPOINT = "https://api.openai.com/v1/completions";
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
     private OnTaskCompleted listener;
@@ -37,8 +39,9 @@ public class OpenAIClient extends AsyncTask<String, Void, JSONObject> {
         JSONObject data = new JSONObject();
         try {
             data.put("prompt", prompt);
-            data.put("max_tokens", 5);
+            data.put("max_tokens", 1000);
             data.put("temperature", 0.7);
+            data.put("model", "text-davinci-003");
         } catch (JSONException e) {
             Log.e(TAG, "JSON error: " + e.getMessage());
             return null;
@@ -72,10 +75,16 @@ public class OpenAIClient extends AsyncTask<String, Void, JSONObject> {
 
     @Override
     protected void onPostExecute(JSONObject result) {
-        listener.onTaskCompleted(result);
+        try {
+            JSONObject firstChoice = result.getJSONArray("choices").getJSONObject(0);
+            listener.onTaskCompleted(firstChoice.getString("text"));
+        } catch (JSONException e) {
+            listener.onTaskError(e.getMessage());
+        }
     }
 
     public interface OnTaskCompleted {
-        void onTaskCompleted(JSONObject result);
+        void onTaskCompleted(String result);
+        void onTaskError(String er);
     }
 }
